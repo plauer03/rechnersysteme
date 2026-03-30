@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Export</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.3.0/github-markdown-dark.min.css">
+  <style>
+      body {
+          background-color: #0d1117;
+          color: #c9d1d9;
+      }
+      .markdown-body {
+          box-sizing: border-box;
+          min-width: 200px;
+          max-width: 980px;
+          margin: 0 auto;
+          padding: 45px;
+          background-color: #0d1117;
+          color: #c9d1d9;
+      }
+
+      /* Syntax Highlighting */
+      .hljs-doctag, .hljs-keyword, .hljs-template-tag, .hljs-template-variable, .hljs-type, .hljs-variable.language_ { color: #ff7b72; }
+      .hljs-title, .hljs-title.class_, .hljs-title.class_.inherited__, .hljs-title.function_ { color: #d2a8ff; }
+      .hljs-attr, .hljs-attribute, .hljs-literal, .hljs-meta, .hljs-number, .hljs-operator, .hljs-variable, .hljs-selector-attr, .hljs-selector-class, .hljs-selector-id { color: #79c0ff; }
+      .hljs-regexp, .hljs-string, .hljs-meta .hljs-string { color: #a5d6ff; }
+      .hljs-built_in, .hljs-symbol { color: #ffa657; }
+      .hljs-comment, .hljs-code, .hljs-formula { color: #8b949e; }
+      .hljs-name, .hljs-quote, .hljs-selector-tag, .hljs-selector-pseudo { color: #7ee787; }
+      .hljs-subst { color: #c9d1d9; }
+      .hljs-section { color: #1f6feb; font-weight: bold; }
+      .hljs-bullet { color: #79c0ff; }
+      .hljs-emphasis { font-style: italic; }
+      .hljs-strong { font-weight: bold; }
+      .hljs-addition { color: #aff5b4; background-color: #033a16; }
+      .hljs-deletion { color: #ffdcd7; background-color: #67060c; }
+
+      .markdown-alert {
+          padding: 0.5rem 1rem;
+          margin-bottom: 16px;
+          border-left: 0.25em solid;
+          border-radius: 0.375rem;
+      }
+      .markdown-alert > :last-child {
+          margin-bottom: 0;
+      }
+      .markdown-alert-title {
+          margin: 0 0 8px;
+          font-weight: 600;
+          line-height: 1.25;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+      }
+      .markdown-alert-icon {
+          display: inline-flex;
+          width: 16px;
+          height: 16px;
+      }
+      .markdown-alert-icon svg {
+          width: 16px;
+          height: 16px;
+          fill: currentColor;
+      }
+      .markdown-alert-note { color: #4493f8; border-left-color: #4493f8; background-color: rgba(31, 111, 235, 0.15); }
+      .markdown-alert-tip { color: #3fb950; border-left-color: #3fb950; background-color: rgba(35, 134, 54, 0.15); }
+      .markdown-alert-important { color: #ab7df8; border-left-color: #ab7df8; background-color: rgba(137, 87, 229, 0.15); }
+      .markdown-alert-warning { color: #d29922; border-left-color: #d29922; background-color: rgba(210, 153, 34, 0.18); }
+      .markdown-alert-caution { color: #f85149; border-left-color: #f85149; background-color: rgba(248, 81, 73, 0.18); }
+      .markdown-alert > *:not(.markdown-alert-title) { color: #c9d1d9; }
+
+      @media (max-width: 767px) {
+          .markdown-body {
+              padding: 15px;
+          }
+      }
+  </style>
+</head>
+<body>
+  <article class="markdown-body">
+      <h1>Raspberry Pi / Bash / RRD / CGI Cheatsheet</h1>
+<blockquote>
+<p>Umfassende Referenz für Linux-, Raspberry-Pi- und Sensor-Aufgaben im Praxisteil.</p>
+</blockquote>
+<hr>
+<h2>Inhaltsverzeichnis</h2>
+<ol>
+<li><a href="#1-schnellstart--installationen">Schnellstart &amp; Installationen</a></li>
+<li><a href="#2-grundlegende-bash-befehle">Grundlegende Bash-Befehle</a></li>
+<li><a href="#3-wichtige-shell-regeln--variablen">Wichtige Shell-Regeln &amp; Variablen</a></li>
+<li><a href="#4-bash-skript-grundmuster">Bash-Skript-Grundmuster</a></li>
+<li><a href="#5-python-auf-dem-raspberry-pi">Python auf dem Raspberry Pi</a></li>
+<li><a href="#6-raspberry-pi-i2c--spi--gpio">Raspberry Pi: I2C / SPI / GPIO</a></li>
+<li><a href="#7-spi-in-python">SPI in Python</a></li>
+<li><a href="#8-i2c-in-python">I2C in Python</a></li>
+<li><a href="#9-messwerte-extrahieren-und-formatieren-parsing">Messwerte extrahieren und formatieren (Parsing) WICHTIG!</a></li>
+<li><a href="#10-rrdtool-grundidee--erstellung">RRDtool: Grundidee &amp; Erstellung</a></li>
+<li><a href="#11-rrd-bef%C3%BCllen-update">RRD befüllen (Update)</a></li>
+<li><a href="#12-rrd-graph-erzeugen-layering--gprint">RRD Graph erzeugen (Korrektes Layering &amp; GPRINT)</a></li>
+<li><a href="#13-sensor---rrd-endlosschleife">Sensor -&gt; RRD: Endlosschleife</a></li>
+<li><a href="#14-lighttpd--cgi--www">Lighttpd + CGI + www</a></li>
+<li><a href="#15-cgi-skript-f%C3%BCr-rrd-graph">CGI-Skript für RRD-Graph</a></li>
+<li><a href="#16-autostart-mit-cron">Autostart mit cron</a></li>
+<li><a href="#17-autostart-mit-tmux">Autostart mit tmux</a></li>
+<li><a href="#18-typische-mini-skripte--logging">Typische Mini-Skripte &amp; Logging</a></li>
+<li><a href="#19-fehlerbilder-diagnose--pr%C3%BCfungsstrategie">Fehlerbilder, Diagnose &amp; Prüfungsstrategie</a></li>
+</ol>
+<hr>
+<p><a id="1-schnellstart--installationen"></a></p>
+<h2>1. Schnellstart &amp; Installationen</h2>
+<h3>System aktualisieren</h3>
+<pre><code class="hljs bash">sudo apt update
+sudo apt upgrade -y
+sudo apt install -y python3 python3-pip python3-venv rrdtool lighttpd tmux i2c-tools python3-smbus python3-spidev</code></pre><h3>Python-Virtual-Environment (Optional, aber empfohlen)</h3>
+<pre><code class="hljs bash">python3 -m venv .venv
+<span class="hljs-built_in">source</span> .venv/bin/activate
+deactivate</code></pre><h3>Python-Pakete installieren</h3>
+<pre><code class="hljs bash">pip install --upgrade pip
+pip install rrdtool spidev smbus2</code></pre><h3>Wichtige Prüfungen</h3>
+<pre><code class="hljs bash">python3 --version
+pip3 --version
+<span class="hljs-built_in">which</span> python3
+<span class="hljs-built_in">which</span> pip3
+<span class="hljs-built_in">pwd</span>
+<span class="hljs-built_in">ls</span> -la</code></pre><hr>
+<p><a id="2-grundlegende-bash-befehle"></a></p>
+<h2>2. Grundlegende Bash-Befehle</h2>
+<h3>Navigation</h3>
+<pre><code class="hljs bash"><span class="hljs-built_in">pwd</span>                 <span class="hljs-comment"># aktuelles Verzeichnis</span>
+<span class="hljs-built_in">ls</span>                  <span class="hljs-comment"># Inhalt anzeigen</span>
+<span class="hljs-built_in">ls</span> -la              <span class="hljs-comment"># inkl. versteckte Dateien und Rechte</span>
+<span class="hljs-built_in">cd</span> /pfad/zum/ordner
+<span class="hljs-built_in">cd</span> ..               <span class="hljs-comment"># ein Verzeichnis nach oben</span>
+<span class="hljs-built_in">cd</span> ~                <span class="hljs-comment"># Home-Verzeichnis</span>
+<span class="hljs-built_in">mkdir</span> ordner
+<span class="hljs-built_in">mkdir</span> -p a/b/c      <span class="hljs-comment"># mehrere Ebenen auf einmal</span></code></pre><h3>Dateien</h3>
+<pre><code class="hljs bash"><span class="hljs-built_in">touch</span> datei.txt
+<span class="hljs-built_in">cp</span> quelle.txt ziel.txt
+<span class="hljs-built_in">cp</span> -r ordner1 ordner2
+<span class="hljs-built_in">mv</span> alt.txt neu.txt
+<span class="hljs-built_in">mv</span> datei.txt /ziel/pfad/
+<span class="hljs-built_in">rm</span> datei.txt
+<span class="hljs-built_in">rm</span> -r ordner        <span class="hljs-comment"># rekursives Löschen</span>
+<span class="hljs-built_in">cat</span> datei.txt
+less datei.txt
+<span class="hljs-built_in">head</span> -n 20 datei.txt
+<span class="hljs-built_in">tail</span> -n 20 datei.txt
+<span class="hljs-built_in">tail</span> -f logfile.log <span class="hljs-comment"># Logfile live mitlesen (WICHTIG für Debugging)</span></code></pre><h3>Suchen</h3>
+<pre><code class="hljs bash">grep <span class="hljs-string">"text"</span> datei.txt
+grep -rin <span class="hljs-string">"text"</span> .
+find . -name <span class="hljs-string">"*.py"</span>
+find . -<span class="hljs-built_in">type</span> f
+find . -<span class="hljs-built_in">type</span> d</code></pre><h3>Rechte (Klausurrelevant!)</h3>
+<pre><code class="hljs bash"><span class="hljs-built_in">ls</span> -l datei.sh
+<span class="hljs-built_in">chmod</span> +x datei.sh         <span class="hljs-comment"># Ausführbar machen (für Skripte + CGI wichtig!)</span>
+<span class="hljs-built_in">chmod</span> 755 datei.sh        <span class="hljs-comment"># rwxr-xr-x</span>
+<span class="hljs-built_in">chmod</span> 644 datei.txt       <span class="hljs-comment"># rw-r--r--</span>
+<span class="hljs-built_in">chown</span> user:group datei    <span class="hljs-comment"># Besitzer ändern (z.B. www-data für Webserver)</span></code></pre><h3>Prozesse</h3>
+<pre><code class="hljs bash">ps aux
+top
+<span class="hljs-built_in">kill</span> PID
+killall python3
+befehl &amp;            <span class="hljs-comment"># im Hintergrund starten</span>
+Ctrl + C            <span class="hljs-comment"># Prozess beenden</span>
+Ctrl + Z            <span class="hljs-comment"># Prozess stoppen</span>
+<span class="hljs-built_in">bg</span>                  <span class="hljs-comment"># gestoppten Prozess in Hintergrund</span>
+<span class="hljs-built_in">fg</span>                  <span class="hljs-comment"># zurück in Vordergrund</span></code></pre><hr>
+<p><a id="3-wichtige-shell-regeln--variablen"></a></p>
+<h2>3. Wichtige Shell-Regeln &amp; Variablen</h2>
+<h3>Umleitungen</h3>
+<pre><code class="hljs bash">befehl &gt; out.txt            <span class="hljs-comment"># stdout überschreiben</span>
+befehl &gt;&gt; out.txt           <span class="hljs-comment"># stdout anhängen (für Logs)</span>
+befehl 2&gt; err.txt           <span class="hljs-comment"># stderr (Fehler) umleiten</span>
+befehl &gt; out.txt 2&gt;&amp;1       <span class="hljs-comment"># stdout + stderr in eine Datei (Wichtig für Cron!)</span>
+befehl &lt; input.txt          <span class="hljs-comment"># Datei als Eingabe</span></code></pre><h3>Pipes und Verkettung</h3>
+<pre><code class="hljs bash">befehl1 | befehl2           <span class="hljs-comment"># Ausgabe von 1 -&gt; Eingabe von 2</span>
+befehl1 ; befehl2           <span class="hljs-comment"># nacheinander</span>
+befehl1 &amp;&amp; befehl2          <span class="hljs-comment"># 2 nur wenn 1 erfolgreich (Exit-Code 0)</span>
+befehl1 || befehl2          <span class="hljs-comment"># 2 nur wenn 1 fehlschlägt</span></code></pre><h3>Variablen</h3>
+<pre><code class="hljs bash">NAME=<span class="hljs-string">"sensor"</span>
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"<span class="hljs-variable">$NAME</span>"</span>
+DATE=$(<span class="hljs-built_in">date</span> +%Y%m%d_%H%M%S) <span class="hljs-comment"># z.B. 20231025_143000</span>
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"<span class="hljs-variable">$DATE</span>"</span></code></pre><h3>Skript-Parameter</h3>
+<pre><code class="hljs bash"><span class="hljs-variable">$0</span>      <span class="hljs-comment"># Skriptname</span>
+<span class="hljs-variable">$1</span>      <span class="hljs-comment"># erster Parameter (z.B. ./skript.sh PARAM1)</span>
+<span class="hljs-variable">$2</span>      <span class="hljs-comment"># zweiter Parameter</span>
+$?      <span class="hljs-comment"># Rückgabewert des letzten Befehls (0 = OK, &gt;0 = Fehler)</span></code></pre><hr>
+<p><a id="4-bash-skript-grundmuster"></a></p>
+<h2>4. Bash-Skript-Grundmuster</h2>
+<h3>Minimaler Aufbau</h3>
+<pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span>
+<span class="hljs-comment"># Die Zeile oben (Shebang) ist zwingend erforderlich!</span>
+
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"Skript startet..."</span></code></pre><h3>if-Bedingung</h3>
+<pre><code class="hljs bash"><span class="hljs-keyword">if</span> [ -f <span class="hljs-string">"sensor.log"</span> ]; <span class="hljs-keyword">then</span>
+    <span class="hljs-built_in">echo</span> <span class="hljs-string">"Datei existiert"</span>
+<span class="hljs-keyword">else</span>
+    <span class="hljs-built_in">echo</span> <span class="hljs-string">"Datei fehlt"</span>
+<span class="hljs-keyword">fi</span></code></pre><h3>while-Endlosschleife (Für Sensor-Readings)</h3>
+<pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span>
+
+<span class="hljs-keyword">while</span> <span class="hljs-literal">true</span>; <span class="hljs-keyword">do</span>
+    python3 sensor.py &gt;&gt; werte.log
+    <span class="hljs-built_in">sleep</span> 5
+<span class="hljs-keyword">done</span></code></pre><hr>
+<p><a id="5-python-auf-dem-raspberry-pi"></a></p>
+<h2>5. Python auf dem Raspberry Pi</h2>
+<h3>Python-Datei starten</h3>
+<pre><code class="hljs bash">python3 script.py
+./script.py           <span class="hljs-comment"># Setzt chmod +x und Shebang voraus!</span></code></pre><h3>Häufige Imports &amp; Shebang</h3>
+<pre><code class="hljs python"><span class="hljs-comment">#!/usr/bin/env python3</span>
+
+<span class="hljs-keyword">import</span> time
+<span class="hljs-keyword">import</span> os
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">import</span> smbus2 <span class="hljs-keyword">as</span> smbus  <span class="hljs-comment"># Kompatibilitätsschicht</span>
+<span class="hljs-keyword">import</span> spidev
+<span class="hljs-keyword">import</span> rrdtool
+<span class="hljs-keyword">import</span> re               <span class="hljs-comment"># Für Regular Expressions (Parsing)</span></code></pre><hr>
+<p><a id="6-raspberry-pi-i2c--spi--gpio"></a></p>
+<h2>6. Raspberry Pi: I2C / SPI / GPIO</h2>
+<h3>Interfaces prüfen und merken</h3>
+<pre><code class="hljs text">I2C:  SDA = GPIO2,  SCL = GPIO3
+SPI0: MOSI = GPIO10, MISO = GPIO9, SCLK = GPIO11, CE0 = GPIO8, CE1 = GPIO7</code></pre><h3>Pinout und Busse prüfen</h3>
+<pre><code class="hljs bash">pinout
+i2cdetect -y 1</code></pre><h3>GPIO mit pinctrl</h3>
+<pre><code class="hljs bash">pinctrl get 16
+pinctrl <span class="hljs-built_in">set</span> 16 op       <span class="hljs-comment"># Output</span>
+pinctrl <span class="hljs-built_in">set</span> 16 dh       <span class="hljs-comment"># Drive High (1)</span>
+pinctrl <span class="hljs-built_in">set</span> 16 dl       <span class="hljs-comment"># Drive Low (0)</span></code></pre><hr>
+<p><a id="7-spi-in-python"></a></p>
+<h2>7. SPI in Python</h2>
+<h3>SPI initialisieren &amp; Senden</h3>
+<pre><code class="hljs python"><span class="hljs-comment">#!/usr/bin/env python3</span>
+<span class="hljs-keyword">import</span> spidev
+<span class="hljs-keyword">import</span> time
+
+spi = spidev.SpiDev()
+spi.<span class="hljs-built_in">open</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>)              <span class="hljs-comment"># Bus 0, Chip Enable 0</span>
+spi.max_speed_hz = <span class="hljs-number">500000</span>
+
+<span class="hljs-comment"># Daten senden/empfangen</span>
+antwort = spi.xfer2([<span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>])
+<span class="hljs-built_in">print</span>(antwort)</code></pre><hr>
+<p><a id="8-i2c-in-python"></a></p>
+<h2>8. I2C in Python</h2>
+<h3>Einzelne Register &amp; Block lesen (z.B. BMP280)</h3>
+<pre><code class="hljs python"><span class="hljs-comment">#!/usr/bin/env python3</span>
+<span class="hljs-keyword">import</span> smbus
+<span class="hljs-keyword">import</span> time
+
+BMP280ADDR = <span class="hljs-number">0x76</span>
+BUS = <span class="hljs-number">1</span>
+bus = smbus.SMBus(BUS)
+
+<span class="hljs-comment"># Sensor konfigurieren</span>
+bus.write_byte_data(BMP280ADDR, <span class="hljs-number">0xF4</span>, <span class="hljs-number">0x27</span>)
+bus.write_byte_data(BMP280ADDR, <span class="hljs-number">0xF5</span>, <span class="hljs-number">0xA0</span>)
+time.sleep(<span class="hljs-number">0.5</span>)
+
+<span class="hljs-comment"># 8 Byte Messdaten lesen ab Register 0xF7</span>
+data = bus.read_i2c_block_data(BMP280ADDR, <span class="hljs-number">0xF7</span>, <span class="hljs-number">8</span>)
+
+<span class="hljs-comment"># Rohdaten Bit-Shifting (Datenblatt-spezifisch)</span>
+adc_p = (data[<span class="hljs-number">0</span>] &lt;&lt; <span class="hljs-number">12</span>) | (data[<span class="hljs-number">1</span>] &lt;&lt; <span class="hljs-number">4</span>) | (data[<span class="hljs-number">2</span>] &gt;&gt; <span class="hljs-number">4</span>)
+adc_t = (data[<span class="hljs-number">3</span>] &lt;&lt; <span class="hljs-number">12</span>) | (data[<span class="hljs-number">4</span>] &lt;&lt; <span class="hljs-number">4</span>) | (data[<span class="hljs-number">5</span>] &gt;&gt; <span class="hljs-number">4</span>)</code></pre><hr>
+<p><a id="9-messwerte-extrahieren-und-formatieren-parsing"></a></p>
+<h2>9. Messwerte extrahieren und formatieren (Parsing)</h2>
+<p>Oft liefern Sensoren, Systembefehle oder andere Skripte Werte in einem Textformat, das erst bereinigt werden muss, bevor es in die RRD-Datenbank darf.</p>
+<h3>Variante A: Strings gezielt zerschneiden (<code>.split()</code> in Python)</h3>
+<p>Nutze diese Methode, wenn der Text immer exakt gleich aufgebaut ist.
+<strong>Fall:</strong> Du hast <code>Ausgabe = "Leistung: 32000 W"</code> und brauchst <code>32000</code> als Zahl.</p>
+<pre><code class="hljs python">ausgabe = <span class="hljs-string">"Leistung: 32000 W"</span>
+
+<span class="hljs-comment"># 1. Am Doppelpunkt zerschneiden -&gt; ["Leistung", " 32000 W"]</span>
+teile = ausgabe.split(<span class="hljs-string">":"</span>) 
+
+<span class="hljs-comment"># 2. Den zweiten Teil nehmen (Index 1)</span>
+wert_string = teile[<span class="hljs-number">1</span>]     <span class="hljs-comment"># " 32000 W"</span>
+
+<span class="hljs-comment"># 3. Unnötige Zeichen entfernen (.replace und .strip für Leerzeichen)</span>
+wert_bereinigt = wert_string.replace(<span class="hljs-string">"W"</span>, <span class="hljs-string">""</span>).strip() <span class="hljs-comment"># "32000"</span>
+
+<span class="hljs-comment"># 4. In einen Zahlenwert (Integer oder Float) umwandeln</span>
+leistung = <span class="hljs-built_in">int</span>(wert_bereinigt)
+
+<span class="hljs-built_in">print</span>(leistung) <span class="hljs-comment"># Gibt aus: 32000</span></code></pre><h3>Variante B: Egal welcher Fall – Zahlen suchen (RegEx in Python)</h3>
+<p>Nutze diese Methode, wenn du dir unsicher bist, wo genau die Zahl steht. RegEx sucht gezielt nach Ziffern.</p>
+<pre><code class="hljs python"><span class="hljs-keyword">import</span> re
+
+<span class="hljs-comment"># Verschiedene mögliche Antworten vom Sensor</span>
+zeile1 = <span class="hljs-string">"Temp=42.5'C"</span>
+zeile2 = <span class="hljs-string">"Leistung: 32000 W"</span>
+zeile3 = <span class="hljs-string">"Wert: -15.48 dbm"</span>
+
+<span class="hljs-comment"># Die Zauberformel sucht nach: Optionales Minus, Ziffern, optionaler Punkt, Ziffern</span>
+muster = <span class="hljs-string">r"[-+]?\d*\.\d+|\d+"</span>
+
+<span class="hljs-comment"># Für zeile1</span>
+<span class="hljs-keyword">match</span> = re.search(muster, zeile1)
+<span class="hljs-keyword">if</span> <span class="hljs-keyword">match</span>:
+    temperatur = <span class="hljs-built_in">float</span>(<span class="hljs-keyword">match</span>.group())
+    <span class="hljs-built_in">print</span>(temperatur) <span class="hljs-comment"># Gibt aus: 42.5</span>
+
+<span class="hljs-comment"># Für zeile2</span>
+match2 = re.search(muster, zeile2)
+<span class="hljs-keyword">if</span> match2:
+    leistung = <span class="hljs-built_in">int</span>(match2.group())
+    <span class="hljs-built_in">print</span>(leistung) <span class="hljs-comment"># Gibt aus: 32000</span></code></pre><h3>Variante C: Falsches Format normieren (z.B. DS18B20)</h3>
+<p><strong>Fall:</strong> Der Sensor liefert <code>52123</code>, gemeint sind aber <code>52,123</code> Grad Celsius.
+Hier muss der gelesene String in eine Zahl gewandelt und berechnet werden.</p>
+<pre><code class="hljs python">rohwert_str = <span class="hljs-string">"52123"</span>
+
+<span class="hljs-comment"># 1. In Ganzzahl umwandeln</span>
+rohwert_int = <span class="hljs-built_in">int</span>(rohwert_str)
+
+<span class="hljs-comment"># 2. Skalieren (durch 1000 teilen -&gt; float)</span>
+temperatur = rohwert_int / <span class="hljs-number">1000.0</span>
+
+<span class="hljs-comment"># 3. Formatiert ausgeben oder direkt in RRD schreiben</span>
+<span class="hljs-built_in">print</span>(<span class="hljs-string">f"Temperatur: <span class="hljs-subst">{temperatur:<span class="hljs-number">.3</span>f}</span> °C"</span>) <span class="hljs-comment"># Gibt aus: Temperatur: 52.123 °C</span></code></pre><h3>Variante D: Daten direkt in Bash auslesen (<code>grep</code>, <code>awk</code>)</h3>
+<p>Wenn du kein Python nutzt, sondern ein Bash-Skript schreibst.</p>
+<pre><code class="hljs bash">ZEILE=<span class="hljs-string">"Leistung: 32000 W"</span>
+
+<span class="hljs-comment"># AWK: Nimmt das 2. Feld (getrennt durch Leerzeichen)</span>
+WERT_AWK=$(<span class="hljs-built_in">echo</span> <span class="hljs-string">"<span class="hljs-variable">$ZEILE</span>"</span> | awk <span class="hljs-string">'{print $2}'</span>)
+
+<span class="hljs-comment"># GREP: Zieht stur nur alle Ziffern aus dem String (-o = only matching, -E = extended regex)</span>
+WERT_GREP=$(<span class="hljs-built_in">echo</span> <span class="hljs-string">"<span class="hljs-variable">$ZEILE</span>"</span> | grep -o -E <span class="hljs-string">'[0-9]+'</span>)
+
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"<span class="hljs-variable">$WERT_AWK</span>"</span>   <span class="hljs-comment"># Gibt aus: 32000</span>
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"<span class="hljs-variable">$WERT_GREP</span>"</span>  <span class="hljs-comment"># Gibt aus: 32000</span></code></pre><hr>
+<p><a id="10-rrdtool-grundidee--erstellung"></a></p>
+<h2>10. RRDtool: Grundidee &amp; Erstellung</h2>
+<p>RRD (Round Robin Database) reserviert beim Erstellen festen Speicherplatz.
+Damit GPRINT (MIN/MAX/LAST) im Graph exakt funktioniert, <strong>müssen</strong> die entsprechenden RRAs beim <code>create</code> definiert werden!</p>
+<h3>RRD erstellen (Korrektes Setup mit allen Archiven)</h3>
+<pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span>
+
+rrdtool create /home/pi/temperatur.rrd --step 5 \
+DS:temp1:GAUGE:600:-30:100 \
+DS:temp2:GAUGE:600:-30:100 \
+RRA:AVERAGE:0.5:1:17280 \
+RRA:MIN:0.5:1:17280 \
+RRA:MAX:0.5:1:17280 \
+RRA:LAST:0.5:1:17280</code></pre><blockquote>
+<p><strong>Erklärung:</strong>
+<code>DS:name:GAUGE:heartbeat:min:max</code> (Datenquelle)
+<code>RRA:FUNKTION:xff:steps:rows</code> (Archiv)
+<code>1:17280</code> bedeutet: Jeder 1. Wert wird für 17280 Schritte (24h bei 5s) gespeichert.</p>
+</blockquote>
+<hr>
+<p><a id="11-rrd-befüllen-update"></a></p>
+<h2>11. RRD befüllen (Update)</h2>
+<h3>Aus der Shell</h3>
+<pre><code class="hljs bash">rrdtool update /home/pi/temperatur.rrd N:23.40:24.10
+<span class="hljs-comment"># N = Now, danach folgen die Werte exakt in der Reihenfolge der DS.</span></code></pre><h3>Aus Python</h3>
+<pre><code class="hljs python"><span class="hljs-keyword">import</span> rrdtool
+
+rrd_path = <span class="hljs-string">'/home/pi/temperatur.rrd'</span>
+t1 = <span class="hljs-number">23.4</span>
+t2 = <span class="hljs-number">24.1</span>
+
+<span class="hljs-comment"># Format-String Methode</span>
+rrdtool.update(rrd_path, <span class="hljs-string">f'N:<span class="hljs-subst">{t1:<span class="hljs-number">.2</span>f}</span>:<span class="hljs-subst">{t2:<span class="hljs-number">.2</span>f}</span>'</span>)</code></pre><hr>
+<p><a id="12-rrd-graph-erzeugen-layering--gprint"></a></p>
+<h2>12. RRD Graph erzeugen (Layering &amp; GPRINT)</h2>
+<p><strong>Regeln für saubere Graphen:</strong></p>
+<ol>
+<li><strong>Reihenfolge ist wichtig (Layering):</strong> RRDtool zeichnet von oben nach unten. Wenn du eine Fläche (<code>AREA</code>) und eine Linie (<code>LINE</code>) willst, musst du <strong>zuerst</strong> die <code>AREA</code> und <strong>danach</strong> die <code>LINE</code> schreiben. Sonst verdeckt die Fläche die Linie!</li>
+<li><strong>Exakte GPRINTs:</strong> Lade für MIN, MAX und LAST jeweils einen eigenen <code>DEF</code>-Block, der exakt auf das korrekte <code>RRA</code> aus der Datenbank verweist.</li>
+</ol>
+<h3>Optimaler Graph mit AREA, LINE und allen GPRINTs</h3>
+<pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span>
+filename=<span class="hljs-string">"/home/raspi/databases/temperatur.rrd"</span>
+output_img=<span class="hljs-string">"/var/www/html/cgi-bin/temperatur_graph.png"</span>
+
+rrdtool graph <span class="hljs-variable">$output_img</span> \
+    --imgformat <span class="hljs-string">'PNG'</span> \
+    --width 640 \
+    --height 300 \
+    --start now-10min \
+    --end now \
+    --vertical-label <span class="hljs-string">"Grad Celsius"</span> \
+    --alt-autoscale \
+    --title <span class="hljs-string">"Temperaturverlauf DS18B20"</span> \
+    \
+    DEF:t1_avg=<span class="hljs-variable">$filename</span>:temp1:AVERAGE \
+    DEF:t1_min=<span class="hljs-variable">$filename</span>:temp1:MIN \
+    DEF:t1_max=<span class="hljs-variable">$filename</span>:temp1:MAX \
+    DEF:t1_last=<span class="hljs-variable">$filename</span>:temp1:LAST \
+    \
+    AREA:t1_avg<span class="hljs-comment">#CCFFCC:"Bereich" \</span>
+    LINE2:t1_avg<span class="hljs-comment">#0000FF:"Temperatur DS18B20\n" \</span>
+    \
+    GPRINT:t1_last:LAST:<span class="hljs-string">"Aktuell\: %5.2lf °C"</span> \
+    GPRINT:t1_min:MIN:<span class="hljs-string">"Min\: %5.2lf °C"</span> \
+    GPRINT:t1_max:MAX:<span class="hljs-string">"Max\: %5.2lf °C"</span> \
+    GPRINT:t1_avg:AVERAGE:<span class="hljs-string">"Avg\: %5.2lf °C\n"</span></code></pre><blockquote>
+<p><strong>Achtung Syntax:</strong> Bei GPRINTs müssen Doppelpunkte, die als Text angezeigt werden sollen, escaped werden (<code>\:</code>). Das <code>\n</code> am Ende des LINE-Titels oder letzen GPRINTs sorgt für einen sauberen Zeilenumbruch in der Legende.</p>
+</blockquote>
+<h3>Graph für zwei Sensoren (Beide mit AREA und LINE)</h3>
+<p>Um beide sichtbar zu machen, sollte AREA eine leichte Deckkraft haben (Hex-Code mit 8 Zeichen: <code>#RRGGBBAA</code>, AA=Alpha/Transparenz, z.B. <code>55</code> für leicht durchsichtig). Alternativ zeichnet man einfach beide Flächen zuerst.</p>
+<pre><code class="hljs bash">rrdtool graph test.png \
+    --start now-1h --title <span class="hljs-string">"Zwei Sensoren"</span> \
+    DEF:t1=<span class="hljs-variable">$filename</span>:temp1:AVERAGE \
+    DEF:t2=<span class="hljs-variable">$filename</span>:temp2:AVERAGE \
+    AREA:t1<span class="hljs-comment">#CCFFCC \</span>
+    AREA:t2<span class="hljs-comment">#FFCCCC \</span>
+    LINE2:t1<span class="hljs-comment">#00FF00:"Sensor 1" \</span>
+    LINE2:t2<span class="hljs-comment">#FF0000:"Sensor 2"</span></code></pre><hr>
+<p><a id="13-sensor---rrd-endlosschleife"></a></p>
+<h2>13. Sensor -&gt; RRD: Endlosschleife</h2>
+<p>Ein sauberes Python-Skript, das Sensoren ausliest, Daten parst und in die RRD schreibt.</p>
+<pre><code class="hljs python"><span class="hljs-comment">#!/usr/bin/env python3</span>
+
+<span class="hljs-keyword">import</span> time
+<span class="hljs-keyword">import</span> rrdtool
+<span class="hljs-keyword">import</span> re
+
+RRD_PATH = <span class="hljs-string">'/home/pi/temperatur.rrd'</span>
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">lese_sensor_1</span>():
+    <span class="hljs-comment"># Beispiel: Sensor gibt "Temp: 24.5 C" zurück</span>
+    raw_data = <span class="hljs-string">"Temp: 24.5 C"</span>
+    <span class="hljs-keyword">match</span> = re.search(<span class="hljs-string">r"[-+]?\d*\.\d+|\d+"</span>, raw_data)
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">float</span>(<span class="hljs-keyword">match</span>.group()) <span class="hljs-keyword">if</span> <span class="hljs-keyword">match</span> <span class="hljs-keyword">else</span> <span class="hljs-number">0.0</span>
+
+<span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:
+    wert1 = lese_sensor_1()
+    
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f"Update: <span class="hljs-subst">{wert1:<span class="hljs-number">.2</span>f}</span> °C"</span>)
+    rrdtool.update(RRD_PATH, <span class="hljs-string">f'N:<span class="hljs-subst">{wert1:<span class="hljs-number">.2</span>f}</span>'</span>)
+    
+    time.sleep(<span class="hljs-number">5</span>) <span class="hljs-comment"># Muss zum --step der RRD passen!</span></code></pre><hr>
+<p><a id="14-lighttpd--cgi--www"></a></p>
+<h2>14. Lighttpd + CGI + www</h2>
+<h3>Webserver installieren &amp; CGI aktivieren</h3>
+<pre><code class="hljs bash">sudo apt install lighttpd
+sudo lighty-enable-mod cgi
+sudo <span class="hljs-built_in">mkdir</span> -p /var/www/html/cgi-bin
+
+<span class="hljs-comment"># Berechtigungen klären</span>
+sudo <span class="hljs-built_in">chown</span> -R www-data:www-data /var/www/html/cgi-bin
+sudo <span class="hljs-built_in">chmod</span> -R 755 /var/www/html/cgi-bin
+
+sudo service lighttpd restart</code></pre><h3>Einfache HTML-Seite (<code>/var/www/html/index.html</code>)</h3>
+<pre><code class="hljs html"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">"utf-8"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>Sensor Dashboard<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>Aktuelle Sensorwerte<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+  <span class="hljs-comment">&lt;!-- Lädt das Bild dynamisch vom CGI-Skript --&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"/cgi-bin/graph.cgi"</span> <span class="hljs-attr">alt</span>=<span class="hljs-string">"Graph"</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></code></pre><hr>
+<p><a id="15-cgi-skript-für-rrd-graph"></a></p>
+<h2>15. CGI-Skript für RRD-Graph</h2>
+<p>CGI-Skripte schreiben das Bild direkt in den Web-Stream.</p>
+<h3><code>/var/www/html/cgi-bin/graph.cgi</code></h3>
+<pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span>
+
+<span class="hljs-comment"># WICHTIG: HTML/CGI-Header für Bilder!</span>
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"Content-Type: image/png"</span>
+<span class="hljs-built_in">echo</span> <span class="hljs-string">""</span>
+
+RRD=<span class="hljs-string">"/home/pi/temperatur.rrd"</span>
+
+<span class="hljs-comment"># Der Bindestrich '-' als Dateiname leitet das Bild nach stdout (ins Web)</span>
+rrdtool graph - \
+    --imgformat PNG \
+    --width 700 \
+    --height 250 \
+    --start -1h \
+    --end now \
+    --title <span class="hljs-string">"Live Temperatur"</span> \
+    DEF:t1=<span class="hljs-variable">$RRD</span>:temp1:AVERAGE \
+    AREA:t1<span class="hljs-comment">#CCFFCC \</span>
+    LINE2:t1<span class="hljs-comment">#0000FF:"Temperatur"</span></code></pre><p><strong>Nicht vergessen:</strong> <code>sudo chmod +x /var/www/html/cgi-bin/graph.cgi</code></p>
+<hr>
+<p><a id="16-autostart-mit-cron"></a></p>
+<h2>16. Autostart mit cron</h2>
+<h3>Befehle</h3>
+<pre><code class="hljs bash">crontab -e  <span class="hljs-comment"># Editieren</span>
+crontab -l  <span class="hljs-comment"># Anzeigen</span></code></pre><h3>Syntax &amp; Beispiele</h3>
+<pre><code class="hljs text">* * * * * befehl
+│ │ │ │ │
+│ │ │ │ └── Wochentag (0-6)
+│ │ │ └──── Monat (1-12)
+│ │ └────── Tag (1-31)
+│ └──────── Stunde (0-23)
+└────────── Minute (0-59)</code></pre><pre><code class="hljs bash"><span class="hljs-comment"># Alle 5 Minuten ausführen</span>
+*/5 * * * * /usr/bin/python3 /home/pi/script.py
+
+<span class="hljs-comment"># Beim Systemstart ausführen (Ausgabe in Log-Datei leiten!)</span>
+@reboot /usr/bin/python3 /home/pi/sensor.py &gt;&gt; /home/pi/cron.log 2&gt;&amp;1</code></pre><blockquote>
+<p><strong>Wichtige Regel:</strong> In cron <em>immer</em> absolute Pfade benutzen (<code>/usr/bin/python3</code> statt <code>python3</code>).</p>
+</blockquote>
+<hr>
+<p><a id="17-autostart-mit-tmux"></a></p>
+<h2>17. Autostart mit tmux</h2>
+<p>tmux eignet sich hervorragend, um Skripte im Hintergrund laufen zu lassen, bei denen man später in der Konsole noch mitlesen möchte.</p>
+<h3>Basis-Befehle</h3>
+<pre><code class="hljs bash">tmux new -s sensor        <span class="hljs-comment"># Neue Session namens "sensor" starten</span>
+tmux a -t sensor          <span class="hljs-comment"># Wieder an "sensor" anhängen (attach)</span>
+tmux <span class="hljs-built_in">ls</span>                   <span class="hljs-comment"># Sessions anzeigen</span>
+tmux kill-session -t sens <span class="hljs-comment"># Session beenden</span></code></pre><h3>Wichtige tmux Shortcuts (Innerhalb der Session)</h3>
+<pre><code class="hljs text">Ctrl + b, d    # Detach (Session im Hintergrund weiterlaufen lassen)
+Ctrl + b, c    # Neues Fenster in der Session
+Ctrl + b, n    # Nächstes Fenster</code></pre><h3>Automatisiertes Start-Skript für tmux</h3>
+<pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span>
+<span class="hljs-comment"># Startet eine Session detached (-d) und führt das Python-Skript aus</span>
+tmux new-session -s <span class="hljs-string">"logger"</span> -d <span class="hljs-string">"/usr/bin/python3 /home/pi/sensor.py"</span></code></pre><hr>
+<p><a id="18-typische-mini-skripte--logging"></a></p>
+<h2>18. Typische Mini-Skripte &amp; Logging</h2>
+<h3>Fehler und Ausgaben in Datei mitschreiben</h3>
+<p>Willst du im Terminal die Werte sehen <strong>und</strong> gleichzeitig in eine Datei loggen? Nutze <code>tee</code>.</p>
+<pre><code class="hljs bash">python3 sensor.py | <span class="hljs-built_in">tee</span> -a sensor.log</code></pre><h3>Bash-Wrapper für stabiles Python-Skript</h3>
+<p>Falls das Skript mal abstürzt, startet diese Schleife es sofort neu.</p>
+<pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span>
+<span class="hljs-keyword">while</span> <span class="hljs-literal">true</span>; <span class="hljs-keyword">do</span>
+    <span class="hljs-built_in">echo</span> <span class="hljs-string">"[<span class="hljs-subst">$(date)</span>] Skript startet..."</span> &gt;&gt; fehler.log
+    /usr/bin/python3 /home/pi/sensor.py &gt;&gt; fehler.log 2&gt;&amp;1
+    <span class="hljs-built_in">sleep</span> 5
+<span class="hljs-keyword">done</span></code></pre><hr>
+<p><a id="19-fehlerbilder-diagnose--prüfungsstrategie"></a></p>
+<h2>19. Fehlerbilder, Diagnose &amp; Prüfungsstrategie</h2>
+<h3>Diagnose-Befehle</h3>
+<pre><code class="hljs bash">systemctl status lighttpd   <span class="hljs-comment"># Läuft der Webserver?</span>
+<span class="hljs-built_in">tail</span> -n 50 /var/log/lighttpd/error.log  <span class="hljs-comment"># Webserver Fehler?</span>
+ps aux | grep python        <span class="hljs-comment"># Läuft das Python-Skript im Hintergrund?</span>
+<span class="hljs-built_in">ls</span> -l /dev/i2c* <span class="hljs-comment"># Sind die I2C-Geräte verfügbar?</span></code></pre><h3>Typische Prüfungsfehler</h3>
+<ol>
+<li><strong>RRD bleibt leer oder Graph ist defekt:</strong> - Stimmt die Anzahl der Werte beim Update exakt mit den <code>DS</code> beim Create überein?<ul>
+<li>Sind die Werte innerhalb des beim Create definierten Bereichs (<code>min:max</code>)?</li>
+<li><code>chmod +x</code> beim CGI-Skript vergessen?</li>
+</ul>
+</li>
+<li><strong>CGI zeigt nur kaputtes Bild-Icon:</strong><ul>
+<li>Hast du <code>echo "Content-Type: image/png"</code> und danach <strong>unbedingt</strong> <code>echo ""</code> im Skript stehen?</li>
+<li>Hast du absolute Pfade zur <code>.rrd</code>-Datei im CGI-Skript verwendet? (Ein CGI hat <code>/var/www/html</code> als Startpunkt, relative Pfade wie <code>./daten.rrd</code> schlagen fehl).</li>
+</ul>
+</li>
+<li><strong>Sensor-Werte falsch gelesen:</strong><ul>
+<li>I2C Bus Adresse geprüft? (<code>i2cdetect -y 1</code>)</li>
+<li>Beim Daten-Parsing (RegEx/Split) falschen Index genommen?</li>
+</ul>
+</li>
+</ol>
+<h3>4-Schritte-Prüfungsstrategie</h3>
+<ol>
+<li><strong>Sensor isoliert testen:</strong> Nur das Python-Skript schreiben und Werte per <code>print()</code> im Terminal kontrollieren. Passt das Parsing?</li>
+<li><strong>Datenbank anlegen &amp; manuell testen:</strong> RRD erstellen und ein Update per Hand (<code>rrdtool update ... N:20</code>) testen.</li>
+<li><strong>Verknüpfen:</strong> Das Python-Skript mit <code>rrdtool.update()</code> erweitern und laufen lassen.</li>
+<li><strong>Visualisieren:</strong> Das Bash-Graph-Skript schreiben. Zuerst als lokales Bild (<code>test.png</code>) speichern und ansehen, erst wenn das klappt, ins <code>/cgi-bin/</code> als Web-Ausgabe verschieben.</li>
+</ol>
+
+  </article>
+</body>
+</html>
