@@ -85,7 +85,8 @@
 </blockquote>
 <hr>
 <h2>Inhaltsverzeichnis</h2>
-<ol>
+<ol start="0">
+<li><a href="#0-get-started">🚨 DATEN VOM SERVER HOLEN</a></li>
 <li><a href="#1-schnellstart--installationen">Schnellstart &amp; Installationen</a></li>
 <li><a href="#2-grundlegende-bash-befehle">Grundlegende Bash-Befehle</a></li>
 <li><a href="#3-wichtige-shell-regeln--variablen">Wichtige Shell-Regeln &amp; Variablen</a></li>
@@ -107,7 +108,83 @@
 <li><a href="#19-fehlerbilder-diagnose--pr%C3%BCfungsstrategie">Fehlerbilder, Diagnose &amp; Prüfungsstrategie</a></li>
 </ol>
 <hr>
-<p><a id="1-schnellstart--installationen"></a></p>
+<p><a id="0-get-started"></a></p>
+<h2>0. Daten vom Server holen (APIs, JSON, CSV)</h2>
+<p>Wenn die Klausuraufgabe lautet: <em>"Lese die Daten von <code>http://...</code> aus"</em>.</p>
+<h3>🧠 Klausur-Strategie</h3>
+<ol>
+<li><strong>Zuerst im Terminal anschauen:</strong> <code>curl http://example.com/api</code></li>
+<li><strong>Format erkennen:</strong><ul>
+<li><code>{...}</code> ➔ JSON</li>
+<li><code>,</code> ➔ CSV</li>
+<li><code>=</code> ➔ Key-Value</li>
+</ul>
+</li>
+<li><strong>Passende Methode unten wählen.</strong></li>
+</ol>
+<h3>🔹 1. JSON (am wahrscheinlichsten bei APIs)</h3>
+<pre><code class="hljs python"><span class="hljs-keyword">import</span> requests
+
+url = <span class="hljs-string">"http://example.com/api"</span>
+data = requests.get(url).json()
+
+<span class="hljs-comment"># Beispiel-Daten: {"power": 523, "voltage": 230}</span>
+leistung = data[<span class="hljs-string">"power"</span>]
+
+<span class="hljs-comment"># Variante verschachtelt: {"sensor": {"power": 523}}</span>
+<span class="hljs-comment"># leistung = data["sensor"]["power"]</span>
+
+<span class="hljs-built_in">print</span>(leistung)</code></pre><h3>🔹 2. CSV (sehr klausurtypisch!)</h3>
+<pre><code class="hljs python"><span class="hljs-keyword">import</span> requests
+<span class="hljs-keyword">import</span> csv
+<span class="hljs-keyword">from</span> io <span class="hljs-keyword">import</span> StringIO
+
+url = <span class="hljs-string">"http://example.com/data.csv"</span>
+response = requests.get(url).text
+
+<span class="hljs-comment"># Variante A: Mit csv-Modul (sicherer)</span>
+<span class="hljs-comment"># Beispiel-Daten:</span>
+<span class="hljs-comment"># timestamp,power,voltage</span>
+<span class="hljs-comment"># 1719839200,523,230</span>
+
+csv_data = csv.DictReader(StringIO(response))
+<span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> csv_data:
+    leistung = <span class="hljs-built_in">int</span>(row[<span class="hljs-string">"power"</span>])
+
+<span class="hljs-comment"># Variante B: Ohne Modul (Quick &amp; Dirty)</span>
+<span class="hljs-comment"># lines = response.splitlines()</span>
+<span class="hljs-comment"># werte = lines[1].split(",")  # Zweite Zeile, am Komma trennen</span>
+<span class="hljs-comment"># leistung = int(werte[1])     # Zweiter Wert in der Zeile</span></code></pre><h3>🔹 3. Plain Text / Key-Value</h3>
+<pre><code class="hljs python"><span class="hljs-keyword">import</span> requests
+
+<span class="hljs-comment"># Beispiel-Antwort:</span>
+<span class="hljs-comment"># power=523</span>
+<span class="hljs-comment"># voltage=230</span>
+
+text = requests.get(<span class="hljs-string">"http://example.com/data"</span>).text
+
+<span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> text.splitlines():
+    <span class="hljs-keyword">if</span> line.startswith(<span class="hljs-string">"power="</span>):
+        leistung = <span class="hljs-built_in">int</span>(line.split(<span class="hljs-string">"="</span>)[<span class="hljs-number">1</span>])</code></pre><h3>🔹 4. Ultra einfacher Fall (nur Zahl)</h3>
+<pre><code class="hljs python"><span class="hljs-keyword">import</span> requests
+
+<span class="hljs-comment"># Beispiel-Antwort: " 523 "</span>
+url = <span class="hljs-string">"http://example.com/data"</span>
+leistung = <span class="hljs-built_in">int</span>(requests.get(url).text.strip())</code></pre><h3>🔥 NOTFALL: Full Bash</h3>
+<p>Wenn du es in Python nicht hinbekommst, mach es direkt im Bash-Skript vor dem RRD-Update!</p>
+<pre><code class="hljs bash">URL=<span class="hljs-string">"http://example.com/api"</span>
+
+<span class="hljs-comment"># JSON (Dirty mit grep - holt zuerst "power":123 und dann nur 123)</span>
+leistung=$(curl -s <span class="hljs-variable">$URL</span> | grep -o <span class="hljs-string">'"power":[0-9]*'</span> | grep -o <span class="hljs-string">'[0-9]*'</span>)
+
+<span class="hljs-comment"># CSV (mit awk - holt Spalte 2 aus Zeile 2)</span>
+leistung=$(curl -s <span class="hljs-variable">$URL</span> | awk -F<span class="hljs-string">','</span> <span class="hljs-string">'NR==2 {print $2}'</span>)
+
+<span class="hljs-comment"># Key-Value (mit grep &amp; cut)</span>
+leistung=$(curl -s <span class="hljs-variable">$URL</span> | grep power | <span class="hljs-built_in">cut</span> -d<span class="hljs-string">'='</span> -f2)
+
+<span class="hljs-comment"># Dann einfach updaten:</span>
+rrdtool update daten.rrd N:<span class="hljs-variable">$leistung</span></code></pre><p><a id="1-schnellstart--installationen"></a></p>
 <h2>1. Schnellstart &amp; Installationen</h2>
 <h3>System aktualisieren</h3>
 <pre><code class="hljs bash">sudo apt update
